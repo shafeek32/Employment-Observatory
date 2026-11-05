@@ -90,6 +90,11 @@ async def save_survey_submission(submission: SurveySubmissionCreate, client_ip: 
     if client:
         try:
             client.table("survey_submissions").insert(record).execute()
+            # Attempt refreshing materialized views for real-time dashboard updates
+            try:
+                client.rpc("refresh_employment_aggregates").execute()
+            except Exception:
+                pass
         except Exception as e:
             # Fallback logging if Supabase write fails
             print(f"[Supabase Write Error] {e}")
