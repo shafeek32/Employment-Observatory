@@ -34,7 +34,7 @@ export default function App() {
     loadData();
   }, []);
 
-  const totalContributions = dashboardData?.macro.total_respondents || 48312;
+  const totalContributions = dashboardData?.macro.total_respondents ?? 0;
 
   const scrollToParticipate = () => {
     const el = document.getElementById('participate-section');

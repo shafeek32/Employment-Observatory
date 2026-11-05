@@ -102,30 +102,57 @@ async def save_survey_submission(submission: SurveySubmissionCreate, client_ip: 
     return deletion_key
 
 async def fetch_dashboard_overview() -> Dict[str, Any]:
-    """Retrieves aggregated statistics from materialized views or baseline data."""
+    """Retrieves live aggregated statistics from Supabase, or falls back to baseline data."""
     client = get_supabase_client()
     if client:
         try:
             overview_res = client.table("mv_dashboard_overview").select("*").limit(1).execute()
-            if overview_res.data and overview_res.data[0].get("total_respondents", 0) > 0:
-                # If Supabase has live materialized views populated with actual records
+            if overview_res.data:
+                macro = overview_res.data[0]
+                total_resp = int(macro.get("total_respondents") or 0)
+                
+                macro["total_respondents"] = total_resp
+                macro["total_employed"] = int(macro.get("total_employed") or 0)
+                macro["total_unemployed"] = int(macro.get("total_unemployed") or 0)
+                macro["employed_percentage"] = float(macro.get("employed_percentage") or 0.0)
+                macro["unemployed_percentage"] = float(macro.get("unemployed_percentage") or 0.0)
+                macro["median_unemployed_age"] = float(macro.get("median_unemployed_age") or 0.0) if macro.get("median_unemployed_age") else None
+                macro["most_represented_stream"] = str(macro.get("most_represented_stream") or "Awaiting Live Entries")
+                macro["sample_notice"] = "Live voluntary public submissions from Supabase."
+                macro["last_refreshed_at"] = str(macro.get("last_refreshed_at") or datetime.now().isoformat())
+                
                 states_res = client.table("mv_state_employment_aggregates").select("*").order("total_respondents", desc=True).execute()
                 streams_res = client.table("mv_engineering_stream_aggregates").select("*").order("total_respondents", desc=True).execute()
                 age_res = client.table("mv_age_distribution_aggregates").select("*").order("age", desc=False).execute()
                 qual_res = client.table("mv_qualification_aggregates").select("*").order("tier_order", desc=False).execute()
                 
-                macro = overview_res.data[0]
-                macro["sample_notice"] = "Reflects voluntary public survey submissions. Does not represent official government statistics from PLFS, MOSPI, or RBI."
-                
+                clean_states = []
+                for s in (states_res.data or []):
+                    s_copy = dict(s)
+                    s_copy["sample_unemployed_ratio"] = float(s.get("sample_unemployed_ratio") or 0.0)
+                    clean_states.append(s_copy)
+                    
+                clean_streams = []
+                for st in (streams_res.data or []):
+                    st_copy = dict(st)
+                    st_copy["sample_unemployed_ratio"] = float(st.get("sample_unemployed_ratio") or 0.0)
+                    clean_streams.append(st_copy)
+                    
+                clean_quals = []
+                for q in (qual_res.data or []):
+                    q_copy = dict(q)
+                    q_copy["sample_unemployed_ratio"] = float(q.get("sample_unemployed_ratio") or 0.0)
+                    clean_quals.append(q_copy)
+
                 return {
                     "macro": macro,
-                    "states": states_res.data,
-                    "engineering_streams": streams_res.data,
-                    "age_distribution": age_res.data,
-                    "qualifications": qual_res.data
+                    "states": clean_states,
+                    "engineering_streams": clean_streams,
+                    "age_distribution": age_res.data or [],
+                    "qualifications": clean_quals
                 }
         except Exception as e:
             print(f"[Supabase Read Error] {e}")
 
-    # Default fallback to baseline aggregated dataset
+    # Fallback to sample baseline dataset
     return SAMPLE_DATA_BASELINE

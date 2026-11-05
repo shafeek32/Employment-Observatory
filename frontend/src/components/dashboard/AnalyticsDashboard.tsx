@@ -284,13 +284,17 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data, on
   const maxBranchDisplay = Math.max(...engineeringBranches.map(b => b.displayCount), 1);
 
   // 5. Bilateral State Comparator
-  const stateA: StateAggregate =
+  const stateA: StateAggregate | undefined =
     data.states.find(s => s.state_id === comparatorStateA) || data.states[0];
-  const stateB: StateAggregate =
+  const stateB: StateAggregate | undefined =
     data.states.find(s => s.state_id === comparatorStateB) || (data.states[1] || data.states[0]);
 
-  const stateAOutOf100 = Math.round((stateA.unemployed_count / stateA.total_respondents) * 100);
-  const stateBOutOf100 = Math.round((stateB.unemployed_count / stateB.total_respondents) * 100);
+  const stateAOutOf100 = (stateA && stateA.total_respondents > 0)
+    ? Math.round((stateA.unemployed_count / stateA.total_respondents) * 100)
+    : 0;
+  const stateBOutOf100 = (stateB && stateB.total_respondents > 0)
+    ? Math.round((stateB.unemployed_count / stateB.total_respondents) * 100)
+    : 0;
 
   return (
     <div className="py-12 px-4 sm:px-8 max-w-7xl mx-auto space-y-12">
@@ -306,7 +310,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data, on
             India's Employment Picture Made Simple
           </h1>
           <p className="text-base text-[#171717]/80 font-normal leading-relaxed">
-            Every number here comes directly from {totalSurveyed.toLocaleString()} people who voluntarily shared their story on this platform. Use the filter controls below to explore any slice of the data.
+            {totalSurveyed > 0 ? (
+              <>Every number here comes directly from {totalSurveyed.toLocaleString()} people who voluntarily shared their story on this platform. Use the filter controls below to explore any slice of the data.</>
+            ) : (
+              <>Live crowdsourced data direct from citizen submissions. Use the filter controls below to explore demographic slices, or participate below to add your experience.</>
+            )}
           </p>
         </div>
 
@@ -326,6 +334,44 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data, on
           </button>
         </div>
       </div>
+
+      {/* LIVE CLEAN SLATE DATABASE BANNER */}
+      {totalSurveyed === 0 && (
+        <div className="bg-[#FAF9F6] border-2 border-[#171717] rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-[#176B52]/10 border border-[#176B52]/30 flex items-center justify-center shrink-0 text-[#176B52] mt-0.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#176B52] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#176B52]"></span>
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs font-bold text-[#176B52] uppercase tracking-wider">
+                  Live Supabase Database Connected
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#171717] text-white">
+                  CLEAN SLATE
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-[#171717]">
+                Awaiting First Voluntary Submissions
+              </h3>
+              <p className="text-sm text-[#171717]/70 max-w-2xl leading-relaxed">
+                Your database is connected and active with zero mock records. As soon as you or visitors submit a response using the survey forms, the charts and numbers below will dynamically update in real time.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
+            <button
+              onClick={() => onStartSurvey('EMPLOYED')}
+              className="flex-1 md:flex-initial px-5 py-2.5 rounded-full bg-[#176B52] hover:bg-[#135944] text-white text-xs font-bold uppercase tracking-wider cursor-pointer active:scale-95 transition-all shadow"
+            >
+              Add First Response
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* FILTER CONTROL PANEL */}
       <div className="bg-white rounded-3xl border-2 border-[#171717] p-6 sm:p-8 space-y-6 shadow-md">

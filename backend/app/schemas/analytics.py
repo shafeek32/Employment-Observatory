@@ -5,8 +5,8 @@ class MacroMetrics(BaseModel):
     total_respondents: int
     total_employed: int
     total_unemployed: int
-    employed_percentage: float
-    unemployed_percentage: float
+    employed_percentage: Optional[float] = 0.0
+    unemployed_percentage: Optional[float] = 0.0
     median_unemployed_age: Optional[float] = None
     most_represented_stream: Optional[str] = None
     last_refreshed_at: str
@@ -19,7 +19,7 @@ class StateAggregate(BaseModel):
     total_respondents: int
     employed_count: int
     unemployed_count: int
-    sample_unemployed_ratio: float
+    sample_unemployed_ratio: Optional[float] = 0.0
     average_age: Optional[float] = None
 
 class EngineeringStreamAggregate(BaseModel):
@@ -28,7 +28,7 @@ class EngineeringStreamAggregate(BaseModel):
     total_respondents: int
     employed_count: int
     unemployed_count: int
-    sample_unemployed_ratio: float
+    sample_unemployed_ratio: Optional[float] = 0.0
 
 class AgeDistributionPoint(BaseModel):
     age: int
@@ -43,7 +43,7 @@ class QualificationAggregate(BaseModel):
     total_respondents: int
     employed_count: int
     unemployed_count: int
-    sample_unemployed_ratio: float
+    sample_unemployed_ratio: Optional[float] = 0.0
 
 class DashboardOverviewResponse(BaseModel):
     macro: MacroMetrics
