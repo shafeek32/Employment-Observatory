@@ -102,8 +102,8 @@ async def fetch_dashboard_overview() -> Dict[str, Any]:
     if client:
         try:
             overview_res = client.table("mv_dashboard_overview").select("*").limit(1).execute()
-            if overview_res.data:
-                # If Supabase has live materialized views populated
+            if overview_res.data and overview_res.data[0].get("total_respondents", 0) > 0:
+                # If Supabase has live materialized views populated with actual records
                 states_res = client.table("mv_state_employment_aggregates").select("*").order("total_respondents", desc=True).execute()
                 streams_res = client.table("mv_engineering_stream_aggregates").select("*").order("total_respondents", desc=True).execute()
                 age_res = client.table("mv_age_distribution_aggregates").select("*").order("age", desc=False).execute()
