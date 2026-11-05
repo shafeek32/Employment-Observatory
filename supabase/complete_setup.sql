@@ -252,3 +252,12 @@ BEGIN
     REFRESH MATERIALIZED VIEW mv_qualification_aggregates;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 9. SCHEMA PERMISSIONS & GRANTS
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT INSERT ON survey_submissions TO anon;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, service_role;
+GRANT EXECUTE ON FUNCTION refresh_employment_aggregates() TO service_role;
+
